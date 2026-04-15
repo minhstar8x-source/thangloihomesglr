@@ -153,7 +153,7 @@ export default function App() {
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000"
           style={{ 
-            backgroundImage: `url('https://i.postimg.cc/7hQSRb42/660431692-122180502596789445-5003665343564458581-n.jpg')`,
+            backgroundImage: `url('https://i.postimg.cc/ZnvQsdH8/HINH-4.jpg')`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
