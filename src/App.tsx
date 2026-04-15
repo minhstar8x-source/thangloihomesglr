@@ -163,8 +163,8 @@ export default function App() {
             Welcome to
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
-            Thắng Lợi <br className="md:hidden" />
-            <span className="text-orange-500">Homes Gallery</span>
+            Thắng Lợi Homes <br className="md:hidden" />
+            <span className="text-orange-500">Gallery</span>
           </h1>
         </div>
       </div>
