@@ -27,7 +27,7 @@ declare global {
 }
 
 // ==========================================
-// 1. ĐIỀN CẤU HÌNH FIREBASE CỦA BẠN TẠI ĐÂY
+// 1. CẤU HÌNH FIREBASE CỦA BẠN
 // ==========================================
 const myFirebaseConfig = {
   apiKey: "AIzaSyBe_LmvyTLaicrXpY1-VVoyyz2J9MexMws",
@@ -46,7 +46,6 @@ let globalInitError: string | null = null;
 
 const safeInitFirebase = () => {
   try {
-    // Kiểm tra biến môi trường Canvas hoặc dùng config mặc định
     const configStr = typeof window !== 'undefined' ? window.__firebase_config : undefined;
     const config = configStr ? JSON.parse(configStr) : myFirebaseConfig;
 
@@ -73,7 +72,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const [error] = useState<string | null>(globalInitError);
 
-  // Lấy App ID an toàn
   const finalAppId = (typeof window !== 'undefined' && window.__app_id) 
     ? window.__app_id 
     : 'thang-loi-homes-gallery';
@@ -98,34 +96,32 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const handleServiceClick = async (id: string, serviceName: string, externalUrl: string) => {
-    if (!db || !user) {
-      window.open(externalUrl, '_blank');
-      return;
-    }
-    
+  const handleServiceClick = (id: string, serviceName: string, externalUrl: string) => {
+    // Để tránh bị chặn trên mobile, chúng ta xử lý điều hướng ngay lập tức (Synchronous)
     setLoading(true);
     setActiveTab(id);
 
-    try {
-      await addDoc(collection(db!, 'artifacts', finalAppId, 'public', 'data', 'visitor_logs'), {
+    // Lưu log vào Firestore (Chạy ngầm, không dùng await để không chặn luồng chính)
+    if (db && user) {
+      addDoc(collection(db!, 'artifacts', finalAppId, 'public', 'data', 'visitor_logs'), {
         userId: user.uid,
         service: serviceName,
         timestamp: serverTimestamp(),
-        platform: 'web_mobile'
-      });
+        platform: 'web_mobile_v2'
+      }).catch(err => console.error("Logging failed:", err));
+    }
 
+    // Trên điện thoại, sử dụng window.location.href để nhảy trang mượt mà và không bị chặn
+    // Thêm một chút delay cực ngắn để người dùng thấy hiệu ứng click
+    setTimeout(() => {
+      window.location.href = externalUrl;
+      
+      // Cleanup trạng thái (đề phòng khách quay lại trang bằng nút Back)
       setTimeout(() => {
-        window.open(externalUrl, '_blank');
         setLoading(false);
         setActiveTab(null);
-      }, 600);
-    } catch (err) {
-      console.error("Firestore error:", err);
-      window.open(externalUrl, '_blank');
-      setLoading(false);
-      setActiveTab(null);
-    }
+      }, 1000);
+    }, 150);
   };
 
   const services = [
@@ -151,15 +147,15 @@ export default function App() {
     <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col items-center">
       <div className="relative w-full h-[45vh] md:h-[50vh] overflow-hidden flex flex-col justify-end">
         <div 
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ 
-            backgroundImage: `url('https://i.postimg.cc/ZnvQsdH8/HINH-4.jpg')`,
+            backgroundImage: `url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&q=80&w=1200')`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
         
         <div className="relative w-full p-8 md:pl-12 pb-14 text-center md:text-left max-w-lg mx-auto md:mx-0">
-          <div className="inline-block bg-white/10 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-white/20 shadow-lg tracking-widest uppercase">
+          <div className="inline-block bg-white/10 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-[10px] font-bold mb-4 border border-white/20 shadow-lg tracking-widest uppercase">
             Welcome to
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
@@ -177,26 +173,26 @@ export default function App() {
               onClick={() => handleServiceClick(service.id, `${service.title} ${service.subtitle}`, service.url)}
               disabled={loading}
               className={`
-                group relative w-full flex items-stretch rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-300
-                ${loading && activeTab === service.id ? 'scale-95 brightness-90' : 'hover:scale-[1.02] active:scale-95'}
+                group relative w-full flex items-stretch rounded-[2.2rem] overflow-hidden shadow-2xl transition-all duration-300 active:scale-95
+                ${loading && activeTab === service.id ? 'brightness-90' : 'hover:scale-[1.02]'}
               `}
             >
               <div className={`flex w-full items-center p-5 bg-gradient-to-br ${service.gradient} text-white`}>
-                <div className="flex-shrink-0 p-3 bg-white/20 backdrop-blur-md rounded-2xl mr-4 shadow-inner">
+                <div className="flex-shrink-0 p-3 bg-white/20 backdrop-blur-md rounded-2xl mr-4">
                   {service.icon}
                 </div>
                 
                 <div className="flex-grow text-left flex flex-col justify-center overflow-hidden">
-                  <h2 className="text-2xl font-black tracking-tighter leading-tight uppercase truncate text-white">
+                  <h2 className="text-2xl font-black tracking-tighter leading-tight uppercase text-white">
                     {service.title}
                   </h2>
-                  <p className="text-white/90 font-bold text-[13px] md:text-sm mt-0.5 uppercase tracking-wide line-clamp-1">
+                  <p className="text-white/90 font-bold text-[13px] mt-0.5 uppercase tracking-wide">
                     {service.subtitle}
                   </p>
                 </div>
                 
-                <div className="flex-shrink-0 ml-2 bg-white/15 p-1.5 rounded-full border border-white/25">
-                  <ChevronRight className={`w-5 h-5 text-white transition-transform ${loading && activeTab === service.id ? 'animate-ping' : 'group-hover:translate-x-1'}`} />
+                <div className="flex-shrink-0 ml-2 bg-white/15 p-2 rounded-full border border-white/25">
+                  <ChevronRight className={`w-5 h-5 text-white ${loading && activeTab === service.id ? 'animate-ping' : ''}`} />
                 </div>
               </div>
             </button>
@@ -210,21 +206,21 @@ export default function App() {
           </div>
         )}
 
-        <div className="mt-10 text-center">
-          <p className="inline-flex items-center text-slate-500 text-[11px] font-black uppercase tracking-[0.2em]">
+        <div className="mt-12 text-center">
+          <p className="inline-flex items-center text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">
             <Smartphone className="w-3.5 h-3.5 mr-2 text-orange-500" />
             Chạm để đăng ký dịch vụ
           </p>
         </div>
       </div>
 
-      <footer className="w-full py-8 text-center bg-slate-50 border-t border-slate-100 mt-8">
+      <footer className="w-full py-10 text-center bg-slate-50 border-t border-slate-100 mt-12">
         <p className="text-slate-900 font-black tracking-[0.25em] text-[10px] uppercase mb-1">Thắng Lợi Homes</p>
         <p className="text-slate-400 text-[9px] font-medium tracking-widest uppercase italic">Copyright 2026</p>
       </footer>
 
       {loading && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md z-50 flex items-center justify-center">
           <div className="flex flex-col items-center">
             <div className="relative w-16 h-16">
               <div className="absolute inset-0 border-4 border-orange-500/20 rounded-full"></div>
