@@ -1,35 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import {
-  getAuth,
-  signInAnonymously,
-  onAuthStateChanged,
-  signInWithCustomToken,
+import { 
+  getAuth, 
+  signInAnonymously, 
+  onAuthStateChanged, 
+  signInWithCustomToken 
 } from 'firebase/auth';
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp,
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  serverTimestamp 
 } from 'firebase/firestore';
-import {
-  MapPin,
-  Construction,
-  ChevronRight,
-  Smartphone,
-  AlertCircle,
-} from 'lucide-react';
+import { MapPin, Construction, ChevronRight, Smartphone, AlertCircle } from 'lucide-react';
 
 // ==========================================
 // 1. ĐIỀN CẤU HÌNH FIREBASE CỦA BẠN TẠI ĐÂY
 // ==========================================
 const myFirebaseConfig = {
-  apiKey: 'AIzaSyBe_LmvyTLaicrXpY1-VVoyyz2J9MexMws',
-  authDomain: 'thangloihomesgallerycheckin.firebaseapp.com',
-  projectId: 'thangloihomesgallerycheckin',
-  storageBucket: 'thangloihomesgallerycheckin.firebasestorage.app',
-  messagingSenderId: '379103774620',
-  appId: '1:379103774620:web:c3647bde9faa6385806a59',
+  apiKey: "AIzaSyBe_LmvyTLaicrXpY1-VVoyyz2J9MexMws",
+  authDomain: "thangloihomesgallerycheckin.firebaseapp.com",
+  projectId: "thangloihomesgallerycheckin",
+  storageBucket: "thangloihomesgallerycheckin.firebasestorage.app",
+  messagingSenderId: "379103774620",
+  appId: "1:379103774620:web:c3647bde9faa6385806a59"
 };
 
 // Biến toàn cục để giữ instance
@@ -39,16 +33,12 @@ let globalInitError = null;
 // Hàm khởi tạo an toàn để không làm sập ứng dụng (tránh màn hình trắng)
 const safeInitFirebase = () => {
   try {
-    const config =
-      typeof __firebase_config !== 'undefined' && __firebase_config
-        ? JSON.parse(__firebase_config)
-        : myFirebaseConfig;
+    const config = (typeof __firebase_config !== 'undefined' && __firebase_config)
+      ? JSON.parse(__firebase_config) 
+      : myFirebaseConfig;
 
-    if (!config || !config.apiKey || config.apiKey === 'YOUR_API_KEY') {
-      return {
-        error:
-          'Vui lòng điền cấu hình Firebase thật vào dòng 17-24 trong App.jsx.',
-      };
+    if (!config || !config.apiKey || config.apiKey === "YOUR_API_KEY") {
+      return { error: "Vui lòng điền cấu hình Firebase thật vào dòng 17-24 trong App.jsx." };
     }
 
     firebaseApp = getApps().length > 0 ? getApp() : initializeApp(config);
@@ -56,16 +46,15 @@ const safeInitFirebase = () => {
     db = getFirestore(firebaseApp);
     return { error: null };
   } catch (err) {
-    console.error('Firebase Init Error:', err);
-    return { error: 'Lỗi cấu hình Firebase. Vui lòng kiểm tra lại mã nguồn.' };
+    console.error("Firebase Init Error:", err);
+    return { error: "Lỗi cấu hình Firebase. Vui lòng kiểm tra lại mã nguồn." };
   }
 };
 
 const initResult = safeInitFirebase();
 globalInitError = initResult.error;
 
-const appId =
-  typeof __app_id !== 'undefined' ? __app_id : 'thang-loi-homes-gallery';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'thang-loi-homes-gallery';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -79,16 +68,13 @@ export default function App() {
 
     const initAuth = async () => {
       try {
-        if (
-          typeof __initial_auth_token !== 'undefined' &&
-          __initial_auth_token
-        ) {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
           await signInAnonymously(auth);
         }
       } catch (err) {
-        console.error('Auth error:', err);
+        console.error("Auth error:", err);
       }
     };
     initAuth();
@@ -102,20 +88,17 @@ export default function App() {
       window.open(externalUrl, '_blank');
       return;
     }
-
+    
     setLoading(true);
     setActiveTab(id);
 
     try {
-      await addDoc(
-        collection(db, 'artifacts', appId, 'public', 'data', 'visitor_logs'),
-        {
-          userId: user.uid,
-          service: serviceName,
-          timestamp: serverTimestamp(),
-          platform: 'web_mobile',
-        }
-      );
+      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'visitor_logs'), {
+        userId: user.uid,
+        service: serviceName,
+        timestamp: serverTimestamp(),
+        platform: 'web_mobile'
+      });
 
       setTimeout(() => {
         window.open(externalUrl, '_blank');
@@ -123,7 +106,7 @@ export default function App() {
         setActiveTab(null);
       }, 600);
     } catch (err) {
-      console.error('Firestore error:', err);
+      console.error("Firestore error:", err);
       window.open(externalUrl, '_blank');
       setLoading(false);
       setActiveTab(null);
@@ -135,39 +118,39 @@ export default function App() {
       id: 'checkin',
       title: 'CHECK-IN',
       subtitle: 'Thắng Lợi Homes Gallery',
-      icon: <MapPin className="w-8 h-8 md:w-10 h-10" />,
+      icon: <MapPin className="w-8 h-8 md:w-10 h-10 text-white" />,
       url: 'https://twccheckin.vercel.app/',
-      gradient: 'from-orange-500 to-amber-600',
+      gradient: 'from-orange-500 to-amber-600'
     },
     {
       id: 'visit',
-      title: 'THAM QUAN',
-      subtitle: 'Công trường The Win City',
-      icon: <Construction className="w-8 h-8 md:w-10 h-10" />,
+      title: 'ĐĂNG KÝ',
+      subtitle: 'Tham quan Công trường',
+      icon: <Construction className="w-8 h-8 md:w-10 h-10 text-white" />,
       url: 'https://thamquanthewincity.vercel.app/',
-      gradient: 'from-slate-700 to-slate-900',
-    },
+      gradient: 'from-slate-700 to-slate-900'
+    }
   ];
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col items-center">
       {/* Hero Section */}
       <div className="relative w-full h-[45vh] md:h-[50vh] overflow-hidden flex flex-col justify-end">
-        <div
+        <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000"
-          style={{
+          style={{ 
             backgroundImage: `url('https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&q=80&w=1200')`,
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-
+        
         <div className="relative w-full p-8 md:pl-12 pb-14 text-center md:text-left max-w-lg mx-auto md:mx-0">
           <div className="inline-block bg-white/10 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-xs font-bold mb-4 border border-white/20 shadow-lg tracking-widest uppercase">
             Welcome to
           </div>
           <h1 className="text-4xl md:text-5xl font-black text-white leading-tight uppercase tracking-tighter">
-            Thắng Lợi homes <br className="md:hidden" />
-            <span className="text-orange-500">Gallery</span>
+            Thắng Lợi <br className="md:hidden" />
+            <span className="text-orange-500">Homes Gallery</span>
           </h1>
         </div>
       </div>
@@ -178,47 +161,32 @@ export default function App() {
           {services.map((service) => (
             <button
               key={service.id}
-              onClick={() =>
-                handleServiceClick(
-                  service.id,
-                  `${service.title} ${service.subtitle}`,
-                  service.url
-                )
-              }
+              onClick={() => handleServiceClick(service.id, `${service.title} ${service.subtitle}`, service.url)}
               disabled={loading}
               className={`
                 group relative w-full flex items-stretch rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-300
-                ${
-                  loading && activeTab === service.id
-                    ? 'scale-95 brightness-90'
-                    : 'hover:scale-[1.02] active:scale-95'
-                }
+                ${loading && activeTab === service.id ? 'scale-95 brightness-90' : 'hover:scale-[1.02] active:scale-95'}
               `}
             >
-              <div
-                className={`flex w-full items-center p-5 bg-gradient-to-br ${service.gradient} text-white`}
-              >
+              <div className={`flex w-full items-center p-5 bg-gradient-to-br ${service.gradient} text-white`}>
+                {/* Icon Section */}
                 <div className="flex-shrink-0 p-3 bg-white/20 backdrop-blur-md rounded-2xl mr-4 shadow-inner">
                   {service.icon}
                 </div>
-
+                
+                {/* Text Section - Cố định text-white để không bị ghi đè */}
                 <div className="flex-grow text-left flex flex-col justify-center overflow-hidden">
-                  <h2 className="text-2xl font-black tracking-tighter leading-tight uppercase truncate">
+                  <h2 className="text-2xl font-black tracking-tighter leading-tight uppercase truncate text-white">
                     {service.title}
                   </h2>
                   <p className="text-white/90 font-bold text-[13px] md:text-sm mt-0.5 uppercase tracking-wide line-clamp-1">
                     {service.subtitle}
                   </p>
                 </div>
-
+                
+                {/* Arrow Section */}
                 <div className="flex-shrink-0 ml-2 bg-white/15 p-1.5 rounded-full border border-white/25">
-                  <ChevronRight
-                    className={`w-5 h-5 transition-transform ${
-                      loading && activeTab === service.id
-                        ? 'animate-ping'
-                        : 'group-hover:translate-x-1'
-                    }`}
-                  />
+                  <ChevronRight className={`w-5 h-5 text-white transition-transform ${loading && activeTab === service.id ? 'animate-ping' : 'group-hover:translate-x-1'}`} />
                 </div>
               </div>
             </button>
@@ -243,8 +211,8 @@ export default function App() {
 
       {/* Footer */}
       <footer className="w-full py-8 text-center bg-slate-50 border-t border-slate-100 mt-8">
-        <p className="text-slate-900 font-black tracking-[0.25em] text-[10px] uppercase mb-1"></p>
-        <p className="text-slate-400 text-[9px] font-medium tracking-widest uppercase italic"></p>
+        <p className="text-slate-900 font-black tracking-[0.25em] text-[10px] uppercase mb-1">Thắng Lợi Group</p>
+        <p className="text-slate-400 text-[9px] font-medium tracking-widest uppercase italic">Kiến tạo cộng đồng - Vun đắp ngày mai</p>
       </footer>
 
       {/* Loading Overlay */}
@@ -255,9 +223,7 @@ export default function App() {
               <div className="absolute inset-0 border-4 border-orange-500/20 rounded-full"></div>
               <div className="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <p className="mt-6 text-white text-xs font-black tracking-[0.3em] animate-pulse uppercase">
-              Vui lòng đợi
-            </p>
+            <p className="mt-6 text-white text-xs font-black tracking-[0.3em] animate-pulse uppercase">Vui lòng đợi</p>
           </div>
         </div>
       )}
