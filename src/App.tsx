@@ -219,8 +219,8 @@ export default function App() {
       </div>
 
       <footer className="w-full py-8 text-center bg-slate-50 border-t border-slate-100 mt-8">
-        <p className="text-slate-900 font-black tracking-[0.25em] text-[10px] uppercase mb-1">Thắng Lợi Group</p>
-        <p className="text-slate-400 text-[9px] font-medium tracking-widest uppercase italic">Kiến tạo cộng đồng - Vun đắp ngày mai</p>
+        <p className="text-slate-900 font-black tracking-[0.25em] text-[10px] uppercase mb-1">Thắng Lợi Homes</p>
+        <p className="text-slate-400 text-[9px] font-medium tracking-widest uppercase italic">Copyright 2026</p>
       </footer>
 
       {loading && (
