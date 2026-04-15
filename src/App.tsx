@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import type { FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   signInAnonymously, 
   onAuthStateChanged, 
-  signInWithCustomToken,
-  Auth,
-  User
+  signInWithCustomToken
 } from 'firebase/auth';
+import type { Auth, User } from 'firebase/auth';
 import { 
   getFirestore, 
   collection, 
   addDoc, 
-  serverTimestamp,
-  Firestore 
+  serverTimestamp
 } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 import { MapPin, Construction, ChevronRight, Smartphone, AlertCircle } from 'lucide-react';
 
 // Định nghĩa các biến toàn cục để tránh lỗi "Cannot find name" khi build trên Vercel
