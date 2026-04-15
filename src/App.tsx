@@ -1,18 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { useState, useEffect } from 'react';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
 import { 
   getAuth, 
   signInAnonymously, 
   onAuthStateChanged, 
-  signInWithCustomToken 
+  signInWithCustomToken,
+  Auth,
+  User
 } from 'firebase/auth';
 import { 
   getFirestore, 
   collection, 
   addDoc, 
-  serverTimestamp 
+  serverTimestamp,
+  Firestore 
 } from 'firebase/firestore';
 import { MapPin, Construction, ChevronRight, Smartphone, AlertCircle } from 'lucide-react';
+
+// Định nghĩa các biến toàn cục để tránh lỗi "Cannot find name" khi build trên Vercel
+declare global {
+  interface Window {
+    __firebase_config?: string;
+    __app_id?: string;
+    __initial_auth_token?: string;
+  }
+}
 
 // ==========================================
 // 1. ĐIỀN CẤU HÌNH FIREBASE CỦA BẠN TẠI ĐÂY
@@ -26,19 +38,20 @@ const myFirebaseConfig = {
   appId: "1:379103774620:web:c3647bde9faa6385806a59"
 };
 
-// Biến toàn cục để giữ instance
-let firebaseApp, auth, db;
-let globalInitError = null;
+// Biến toàn cục có kiểu dữ liệu rõ ràng
+let firebaseApp: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let db: Firestore | undefined;
+let globalInitError: string | null = null;
 
-// Hàm khởi tạo an toàn để không làm sập ứng dụng (tránh màn hình trắng)
 const safeInitFirebase = () => {
   try {
-    const config = (typeof __firebase_config !== 'undefined' && __firebase_config)
-      ? JSON.parse(__firebase_config) 
-      : myFirebaseConfig;
+    // Kiểm tra biến môi trường Canvas hoặc dùng config mặc định
+    const configStr = typeof window !== 'undefined' ? window.__firebase_config : undefined;
+    const config = configStr ? JSON.parse(configStr) : myFirebaseConfig;
 
     if (!config || !config.apiKey || config.apiKey === "YOUR_API_KEY") {
-      return { error: "Vui lòng điền cấu hình Firebase thật vào dòng 17-24 trong App.jsx." };
+      return { error: "Vui lòng cấu hình Firebase trong App.tsx" };
     }
 
     firebaseApp = getApps().length > 0 ? getApp() : initializeApp(config);
@@ -47,43 +60,45 @@ const safeInitFirebase = () => {
     return { error: null };
   } catch (err) {
     console.error("Firebase Init Error:", err);
-    return { error: "Lỗi cấu hình Firebase. Vui lòng kiểm tra lại mã nguồn." };
+    return { error: "Lỗi kết nối hệ thống lưu trữ." };
   }
 };
 
 const initResult = safeInitFirebase();
 globalInitError = initResult.error;
 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'thang-loi-homes-gallery';
-
 export default function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState(null);
-  const [error, setError] = useState(globalInitError);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [error] = useState<string | null>(globalInitError);
+
+  // Lấy App ID an toàn
+  const finalAppId = (typeof window !== 'undefined' && window.__app_id) 
+    ? window.__app_id 
+    : 'thang-loi-homes-gallery';
 
   useEffect(() => {
-    // Chỉ chạy auth nếu khởi tạo thành công
     if (!auth) return;
 
     const initAuth = async () => {
       try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
+        const token = typeof window !== 'undefined' ? window.__initial_auth_token : undefined;
+        if (token) {
+          await signInWithCustomToken(auth!, token);
         } else {
-          await signInAnonymously(auth);
+          await signInAnonymously(auth!);
         }
       } catch (err) {
         console.error("Auth error:", err);
       }
     };
     initAuth();
-    const unsubscribe = onAuthStateChanged(auth, setUser);
+    const unsubscribe = onAuthStateChanged(auth!, (u) => setUser(u));
     return () => unsubscribe();
   }, []);
 
-  const handleServiceClick = async (id, serviceName, externalUrl) => {
-    // Luôn mở link cho khách kể cả khi có lỗi hệ thống
+  const handleServiceClick = async (id: string, serviceName: string, externalUrl: string) => {
     if (!db || !user) {
       window.open(externalUrl, '_blank');
       return;
@@ -93,7 +108,7 @@ export default function App() {
     setActiveTab(id);
 
     try {
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'visitor_logs'), {
+      await addDoc(collection(db!, 'artifacts', finalAppId, 'public', 'data', 'visitor_logs'), {
         userId: user.uid,
         service: serviceName,
         timestamp: serverTimestamp(),
@@ -134,7 +149,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 flex flex-col items-center">
-      {/* Hero Section */}
       <div className="relative w-full h-[45vh] md:h-[50vh] overflow-hidden flex flex-col justify-end">
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000"
@@ -155,7 +169,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* Services Container */}
       <div className="w-full max-w-md px-6 -mt-8 z-10 flex-grow">
         <div className="grid grid-cols-1 gap-4">
           {services.map((service) => (
@@ -169,12 +182,10 @@ export default function App() {
               `}
             >
               <div className={`flex w-full items-center p-5 bg-gradient-to-br ${service.gradient} text-white`}>
-                {/* Icon Section */}
                 <div className="flex-shrink-0 p-3 bg-white/20 backdrop-blur-md rounded-2xl mr-4 shadow-inner">
                   {service.icon}
                 </div>
                 
-                {/* Text Section - Cố định text-white để không bị ghi đè */}
                 <div className="flex-grow text-left flex flex-col justify-center overflow-hidden">
                   <h2 className="text-2xl font-black tracking-tighter leading-tight uppercase truncate text-white">
                     {service.title}
@@ -184,7 +195,6 @@ export default function App() {
                   </p>
                 </div>
                 
-                {/* Arrow Section */}
                 <div className="flex-shrink-0 ml-2 bg-white/15 p-1.5 rounded-full border border-white/25">
                   <ChevronRight className={`w-5 h-5 text-white transition-transform ${loading && activeTab === service.id ? 'animate-ping' : 'group-hover:translate-x-1'}`} />
                 </div>
@@ -193,7 +203,6 @@ export default function App() {
           ))}
         </div>
 
-        {/* Cảnh báo lỗi cấu hình nếu có */}
         {error && (
           <div className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start space-x-3 text-orange-700 text-[11px] leading-relaxed font-medium">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-orange-500" />
@@ -209,13 +218,11 @@ export default function App() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="w-full py-8 text-center bg-slate-50 border-t border-slate-100 mt-8">
         <p className="text-slate-900 font-black tracking-[0.25em] text-[10px] uppercase mb-1">Thắng Lợi Group</p>
         <p className="text-slate-400 text-[9px] font-medium tracking-widest uppercase italic">Kiến tạo cộng đồng - Vun đắp ngày mai</p>
       </footer>
 
-      {/* Loading Overlay */}
       {loading && (
         <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center">
           <div className="flex flex-col items-center">
